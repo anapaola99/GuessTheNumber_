@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import { StyleSheet, Text, View, Button } from 'react-native-web';
 
-import Card from '../Components/Cards'
+import Card from '../Components/Card'
 import Colors from '../constants/Colors';
 import Input from '../Components/input';
 import {NumberContainer} from '../Components/NumberContainer';
 
 function StartGameScreen (){
-    const [enteredValue, setEnerValue] = useState('');
+    const [enteredValue, setEnterValue] = useState('');
     const [confirmed, setConfirmed] = useState(false);
     const [selectedNumber, serSelectNumber] = useState(undefined);
 
@@ -25,6 +25,17 @@ function StartGameScreen (){
 
     }
     
+    const confirmInputHandler = () => {
+        const chosenNumber = parseInt(enteredValue);
+        if( isNaN(chosenNumber) || chosenNumber <= 1 || chosenNumber > 99) {
+          return
+        }
+    
+        setConfirmed(true)
+        setSelectedNumber(chosenNumber)
+        setEnteredValue('')
+      }
+
     let confirmedOutput;
 
     if(confirmed){
@@ -61,7 +72,7 @@ function StartGameScreen (){
     )
 }
 
-const styles = StylesSheet.create({
+const styles = StyleSheet.create({
     selectedContainer:{
         marginTop: 20,
         alignItems: 'center',
