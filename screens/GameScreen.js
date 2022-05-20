@@ -1,117 +1,86 @@
-import React, { useState } from 'react'
-import { StyleSheet, Text, View, Button } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react'
+import { StyleSheet, Text, View, Button, Alert } from 'react-native';
 
-import Card from '../components/Card'
-import Colors from '../constants/Colors';
-import Input from '../components/Input';
+import Card from '../components/Card';
 import NumberContainer from '../components/NumberContainer';
+import GameOverScreen from './GameOverScreen';
+import { direction_ as importedDirection } from '../constants/constants';
 
-const StartGameScreen = ({ onStartGame }) => {
+const generateRandomBetween = ( min, max, exclude ) => {
+    min = Math.ceil(min);
+    max = Math.floor(max);
 
-const [enteredValue, setEnteredValue] = useState('');
-const [confirmed, setConfirmed] = useState(false);
-const [selectedNumber, setSelectedNumber] = useState(undefined);
+    const randNum = Math.random() * (max - min) + min;
+    const randNumFloored = Math.floor(randNum);
 
-const numberInputHandler = input => {
-    setEnteredValue(input.replace(/[^0-9]/g, ''));
+    if(randNumFloored === exclude)
+    {
+       return generateRandomBetween(min, max, exclude);
+    }else{
+        return randNumFloored;
+    }
+
 }
 
-const resetInputHandler = input => {
-    setEnteredValue('')
-    setConfirmed(false)
-}
+const GameScreen = ({selectedNumber, onGameOver}) => {
 
-const confirmInputHandler = () => {
-    const chosenNumber = parseInt(enteredValue);
-    if(isNaN(chosenNumber) || chosenNumber <= 0 || chosenNumber > 99) return
+    const currentLow = useRef(1);
+    const currentHigh = useRef(100);
+    const [currentGuess, setCurrentGuess] = 
+    useState(generateRandomBetween(currentLow.current, currentHigh.current, selectedNumber));
+    const [rounds, setRounds] = useState(0)
 
-    setConfirmed(true)
-    setSelectedNumber(chosenNumber)
-    setEnteredValue('')
-}
+    useEffect(() =>{
+        if(currentGuess === selectedNumber){
+            onGameOver(rounds)
+        }
+    },[currentGuess])
 
-let confirmedOutput;
+    const nextGuess = direction => {
 
-if(confirmed){
-    confirmedOutput = (
-    <Card style={styles.selectedContainer}>
-        <Text>You selected:</Text>
-        <NumberContainer>
-            {selectedNumber}
-        </NumberContainer>
-        <Button 
-            title='Ready to start game?'
-            onPress={ () => onStartGame(selectedNumber) }
-        />
-    </Card>
-    )
-}
+        if( (direction === importedDirection.higher && currentGuess > selectedNumber ) || 
+        (direction === importedDirection.lower && currentGuess < selectedNumber )) {
+           // Alert('Pls don\t lie, You know that\s wrong', [{ text: 'Sorry', style: 'cancel'}])
+           alert('Pls don\'t lie')
+            return
+        }
+
+        if(direction === importedDirection.lower) {
+            currentHigh.current = currentGuess;
+
+        }else{
+            currentLow.current = currentGuess;
+        }
+
+        const nextNum = generateRandomBetween(currentLow.current, currentHigh.current, currentGuess);
+        setRounds( currentRounds => currentRounds + 1)
+        setCurrentGuess(nextNum);
+    }
 
   return (
     <View style={styles.screen}>
-        <Card>
-            <Text style={styles.title}>Select a Number</Text>
-                <Input 
-                style={styles.input}
-                blurOnSubmit//Android
-                autoCapitalize='none'
-                autoCorrect={false}
-                keyboardType="number-pad"
-                maxLength={2}
-                onChangeText={numberInputHandler}
-                value={enteredValue}
-                />
-                <View style={styles.buttonContainer}>
-                <View style={styles.button}>
-                        <Button 
-                        title="Reset" 
-                        color={Colors.secondary} 
-                        onPress={resetInputHandler}
-                    />
-                    </View>
-                    <View style={styles.button}>
-                        <Button 
-                        title="Confirm" 
-                        color={Colors.primary} 
-                        onPress={confirmInputHandler}
-                    />
-                </View>
-            </View>
+        <Text>Computer Guess: </Text>
+        <NumberContainer>{currentGuess}</NumberContainer>
+        <Card style={styles.buttonContainer}>
+            <Button title='Lower' onPress={ () => { nextGuess(importedDirection.lower) } } />
+            <Button title='Higher' onPress={ () => { nextGuess(importedDirection.higher) } } />
         </Card>
-        {confirmedOutput}
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-    selectedContainer:{
-        marginTop: 20,
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
     screen: {
         flex: 1,
         padding: 10,
         alignItems: 'center',
         flexDirection: 'column'
     },
-    title:{
-        fontSize: 20,
-        marginVertical: 10,
-    },
-    button:{
-       width: 100
-    },
-    buttonContainer:{
+    buttonContainer: {
         flexDirection: 'row',
-        width: '100%',
-        justifyContent: 'space-between',
-        paddingHorizontal: 15,
-    },
-    input:{
-        width: 50,
-        textAlign: 'center'
+        justifyContent: 'space-around',
+        marginTop: 20,
     }
   });
 
-export default StartGameScreen;
+export default GameScreen
